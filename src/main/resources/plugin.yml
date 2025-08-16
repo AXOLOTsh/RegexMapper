@@ -1,6 +1,6 @@
 name: RegexMapper
 version: '1.0'
-main: io.github.axolotsh.regexMapper.RegexMapper
+main: io.github.axolotsh.regexMapper.Plugin
 api-version: '1.21'
 authors: [ AXOLOTsh ]
 description: Adds the ability to use regex in resource packs.

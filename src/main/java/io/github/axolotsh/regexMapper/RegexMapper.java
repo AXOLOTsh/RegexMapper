@@ -1,46 +1,105 @@
 package io.github.axolotsh.regexMapper;
 
 import io.github.axolotsh.regexMapper.entities.RegexCase;
-import org.bukkit.plugin.java.JavaPlugin;
+import net.kyori.adventure.text.TextComponent;
+import org.bukkit.NamespacedKey;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.AnvilInventory;
+import org.bukkit.inventory.ItemStack;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
-public final class RegexMapper extends JavaPlugin {
-    public static final Logger LOGGER = LoggerFactory.getLogger("RegexMapper");
-    @Override
-    public void onEnable() {
-        saveDefaultConfig();
-
-        mapCases();
-
-        getServer().getPluginManager().registerEvents(new EventListener(), this);
+public class RegexMapper {
+    private static final RegexMapper instance = new RegexMapper();
+    public static RegexMapper getInstance() {
+        return instance;
     }
 
-    private void mapCases() {
-        var section = getConfig().getConfigurationSection("cases");
-        if (section != null) {
-            Set<String> keys = section.getKeys(false);
+    private final Logger LOGGER = Plugin.LOGGER;
 
-            for (String key : keys) {
-                var value = section.getConfigurationSection(key);
-                if (value != null) {
-                    var item = value.getString("item");
+    private final List<RegexCase> cases = new ArrayList<RegexCase>();
+    private RegexMapper() { }
 
-                    var regex = value.getString("regex");
-                    var model = value.getString("model");
+    public void addCase(RegexCase regexCase) {
+        cases.add(regexCase);
+    }
+    public void removeCase(RegexCase regexCase) {
+        cases.remove(regexCase);
+    }
+    public void removeCase(int index) {
+        cases.remove(index);
+    }
+    public List<RegexCase> getCases() {
+        return Collections.unmodifiableList(cases);
+    }
 
-                    var customModelData = value.getBoolean("custom_model_data");
-                    if (regex == null || model == null) {
-                        LOGGER.error(String.format("Can not load %s case!", key));
-                        continue;
+    public void proceedItemRenameConditions(InventoryClickEvent event) {
+        if (event.getInventory().getType() != InventoryType.ANVIL)
+            return;
+
+        var anvilInventory = (AnvilInventory) event.getInventory();
+        if (event.getRawSlot() != 2)
+            return;
+
+        var resultItem = anvilInventory.getItem(2);
+        if (resultItem == null || !resultItem.hasItemMeta())
+            return;
+
+        var meta = resultItem.getItemMeta();
+        if (!meta.hasDisplayName())
+            return;
+
+        mapRegex(resultItem);
+    }
+
+    public void mapRegex(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (!meta.hasDisplayName())
+            return;
+
+        var displayName = ((TextComponent)meta.displayName());
+        assert displayName != null;
+        var itemName = displayName.content();
+
+        for (RegexCase regexCase : cases) {
+            var currentItemType = item.getType().getKey().toString();
+            var itemType = regexCase.getItemType();
+            var pattern = regexCase.getRegexPattern();
+
+            if (itemType == null || Objects.equals(itemType, currentItemType)) {
+                if (itemName.matches(pattern)) {
+                    var modelName = regexCase.getItemModel();
+                    if (regexCase.isCustomModelData()) {
+                        var customData = meta.getCustomModelDataComponent();
+
+                        var strings = new ArrayList<String>();
+                        strings.add(modelName);
+                        customData.setStrings(strings);
+
+                        meta.setCustomModelDataComponent(customData);
+                    }
+                    else  {
+                        var model = NamespacedKey.fromString(modelName);
+
+                        meta.setItemModel(model);
                     }
 
-                    LOGGER.info(String.format("Loaded %s case:\nItem:%s\nRegex:%s\nModel:%s,\nCustom Model Data:%b", item, key, regex, model, customModelData));
-                    RegexMapperService.getInstance().addCase(new RegexCase(item, regex, model, customModelData));
+                    item.setItemMeta(meta);
+                    return;
                 }
             }
         }
+
+        if (meta.hasItemModel())
+            meta.setItemModel(null);
+        if (meta.hasCustomModelDataComponent()) {
+            var customData = meta.getCustomModelDataComponent();
+            customData.setStrings(new ArrayList<>());
+            meta.setCustomModelDataComponent(customData);
+        }
+        item.setItemMeta(meta);
     }
 }
