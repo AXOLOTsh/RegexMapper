@@ -1,21 +1,18 @@
 package io.github.axolotsh.regexMapper;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.github.axolotsh.regexMapper.commands.RegexMapperCommand;
 import io.github.axolotsh.regexMapper.entities.RegexCase;
-import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-import java.util.Set;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Plugin extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("RegexMapper");
@@ -23,15 +20,43 @@ public final class Plugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        mapCases();
+        loadCases();
 
         registerCommands();
 
         getServer().getPluginManager().registerEvents(new EventListener(), this);
     }
 
-    private void mapCases() {
-        var section = getConfig().getConfigurationSection("cases");
+    private void saveExampleCases() {
+        var file = new File(getDataFolder(), "cases.json");
+        if (file.exists())
+            return;
+
+        var gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
+
+        try (FileWriter writer = new FileWriter(file.getPath())) {
+            gson.toJson(RegexCase.getExampleCases(), writer);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private void loadCases() {
+        var file = new File(getDataFolder(), "cases.json");
+        if (!file.exists())
+            saveExampleCases();
+
+        Gson gson = new Gson();
+        var mapper = RegexMapper.getInstance();
+        try (FileReader reader = new FileReader(file.getPath())) {
+            List <RegexCase> cases = gson.fromJson(reader, new TypeToken<List<RegexCase>>() {}.getType());
+            cases.forEach(mapper::addCase);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+        /*var section = getConfig().getConfigurationSection("cases");
         if (section != null) {
             Set<String> keys = section.getKeys(false);
 
@@ -49,11 +74,11 @@ public final class Plugin extends JavaPlugin {
                         continue;
                     }
 
-                    LOGGER.info(String.format("Loaded %s case:\nItem:%s\nRegex:%s\nModel:%s,\nCustom Model Data:%b", key, item, regex, model, customModelData));
+                    //LOGGER.info(String.format("Loaded %s case:\nItem:%s\nRegex:%s\nModel:%s,\nCustom Model Data:%b", key, item, regex, model, customModelData));
                     RegexMapper.getInstance().addCase(new RegexCase(key, item, regex, model, customModelData));
                 }
             }
-        }
+        }*/
     }
 
     private void registerCommands() {

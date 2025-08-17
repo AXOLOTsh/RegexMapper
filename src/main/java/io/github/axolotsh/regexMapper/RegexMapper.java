@@ -1,5 +1,6 @@
 package io.github.axolotsh.regexMapper;
 
+import com.google.gson.Gson;
 import io.github.axolotsh.regexMapper.entities.RegexCase;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.NamespacedKey;
@@ -7,6 +8,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
+import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -64,42 +67,55 @@ public class RegexMapper {
         assert displayName != null;
         var itemName = displayName.content();
 
+        var key = NamespacedKey.fromString("regexmapper:mapped");
+        assert key != null;
         for (RegexCase regexCase : cases) {
             var currentItemType = item.getType().getKey().toString();
-            var itemType = regexCase.getItemType();
-            var pattern = regexCase.getRegexPattern();
+            var itemType = regexCase.getItem();
+            var pattern = regexCase.getPattern();
 
             if (itemType == null || Objects.equals(itemType, currentItemType)) {
                 if (itemName.matches(pattern)) {
-                    var modelName = regexCase.getItemModel();
-                    if (regexCase.isCustomModelData()) {
-                        var customData = meta.getCustomModelDataComponent();
-
-                        var strings = new ArrayList<String>();
-                        strings.add(modelName);
-                        customData.setStrings(strings);
-
-                        meta.setCustomModelDataComponent(customData);
-                    }
-                    else  {
-                        var model = NamespacedKey.fromString(modelName);
-
+                    var model = regexCase.getModel();
+                    if (model != null)
                         meta.setItemModel(model);
+
+                    var customModelData = regexCase.getCustomModelData();
+                    if (customModelData != null) {
+                        var cmd = meta.getCustomModelDataComponent();
+                        cmd.setFloats(customModelData.getFloats());
+                        cmd.setFlags(customModelData.getFlags());
+                        cmd.setStrings(customModelData.getStrings());
+                        cmd.setColors(customModelData.getColors());
+
+                        meta.setCustomModelDataComponent(cmd);
                     }
 
+                    var container = meta.getPersistentDataContainer();
+                    container.set(key, PersistentDataType.STRING, regexCase.getName());
                     item.setItemMeta(meta);
                     return;
                 }
             }
         }
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(key))
+            return;
 
-        if (meta.hasItemModel())
+        var containerValue = container.get(key, PersistentDataType.STRING);
+        var filter = cases.stream().filter(x -> Objects.equals(x.getName(), containerValue)).findFirst();
+        if (filter.isEmpty())
+            return;
+        var value = filter.get();
+
+        var model = value.getModel();
+        if (model != null)
             meta.setItemModel(null);
-        if (meta.hasCustomModelDataComponent()) {
-            var customData = meta.getCustomModelDataComponent();
-            customData.setStrings(new ArrayList<>());
-            meta.setCustomModelDataComponent(customData);
-        }
+
+        var customModelData = value.getCustomModelData();
+        if (customModelData != null)
+            meta.setCustomModelDataComponent(null);
         item.setItemMeta(meta);
     }
 }
+

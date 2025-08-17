@@ -20,7 +20,7 @@ public class InfoCommand implements ICommand {
     @NotNull
     public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
         return Commands.literal("info")
-                .then(Commands.argument("item", StringArgumentType.word())
+                .then(Commands.argument("item", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> {
                             RegexMapper.getInstance().getCases().stream()
                                     .map(RegexCase::getName)

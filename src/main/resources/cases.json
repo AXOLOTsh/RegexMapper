@@ -1,0 +1,14 @@
+[
+  {
+    "name": "example",
+    "description": "This example will change model of iron ingot item when you match pattern to torch. External models will require a resource pack.",
+
+    "item": "minecraft:iron_ingot",
+    "pattern" : "(?i)example regex.*",
+
+    "model": "minecraft:torch",
+    "custom_model_data": {
+      "strings": [ "example_data" ]
+    }
+  }
+]
