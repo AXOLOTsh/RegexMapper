@@ -13,11 +13,18 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ListCommand implements ICommand {
     @Override
+    public String getPermission() {
+        return "regexmapper.command.regmap.list";
+    }
+
+    @Override
     public @NotNull LiteralArgumentBuilder<CommandSourceStack> getCommand() {
         return Commands.literal("list")
+                .requires(x -> x.getSender().hasPermission(getPermission()))
                 .executes(this::execution);
     }
 
@@ -29,7 +36,7 @@ public class ListCommand implements ICommand {
             var util = new RegexCaseUtils(item);
             sender.sendMessage(Component.text(item.getName())
                     .clickEvent(ClickEvent.runCommand(String.format("regmap info %s", item.getName())))
-                    .hoverEvent(HoverEvent.showText(util.getComponent()))
+                    .hoverEvent(HoverEvent.showText(util.getOpComponent()))
                     .color(NamedTextColor.AQUA)
                     .decorate(TextDecoration.UNDERLINED));
         }

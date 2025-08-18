@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import io.github.axolotsh.regexMapper.Plugin;
 import io.github.axolotsh.regexMapper.RegexMapper;
 import io.github.axolotsh.regexMapper.entities.RegexCase;
 import io.github.axolotsh.regexMapper.utils.RegexCaseUtils;
@@ -17,9 +18,15 @@ import java.util.Objects;
 
 public class InfoCommand implements ICommand {
     @Override
+    public String getPermission() {
+        return "regexmapper.command.regmap.info";
+    }
+
+    @Override
     @NotNull
     public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
         return Commands.literal("info")
+                .requires(x -> x.getSender().hasPermission(getPermission()))
                 .then(Commands.argument("item", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> {
                             RegexMapper.getInstance().getCases().stream()
@@ -45,7 +52,12 @@ public class InfoCommand implements ICommand {
         var item = qitem.get();
         var util = new RegexCaseUtils(item);
 
-        sender.sendMessage(util.getComponent());
+        Plugin.LOGGER.info(sender.isOp() ? "true" : "false");
+        Plugin.LOGGER.info(sender.hasPermission(new GiveCommand().getPermission()) ? "true" : "false");
+        if (sender.isOp() || sender.hasPermission(new GiveCommand().getPermission()))
+            sender.sendMessage(util.getOpComponent());
+        else
+            sender.sendMessage(util.getComponent());
         return Command.SINGLE_SUCCESS;
     }
 }

@@ -16,14 +16,21 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class GiveCommand implements ICommand {
     @Override
+    public String getPermission() {
+        return "regexmapper.command.regmap.give";
+    }
+
+    @Override
     @NotNull
     public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
         return Commands.literal("give")
+                .requires(x -> x.getSender().hasPermission(getPermission()))
                 .then(Commands.argument("item", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> {
                             RegexMapper.getInstance().getCases().stream()
@@ -64,6 +71,7 @@ public class GiveCommand implements ICommand {
             meta.displayName(MiniMessage.miniMessage().deserialize(item.getName()));
             itemStack.setItemMeta(meta);
             player.give(itemStack);
+            sender.sendMessage("Item given!");
 
             return Command.SINGLE_SUCCESS;
         }

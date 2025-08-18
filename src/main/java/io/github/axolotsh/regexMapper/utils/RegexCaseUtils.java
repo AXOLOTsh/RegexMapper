@@ -1,7 +1,6 @@
 package io.github.axolotsh.regexMapper.utils;
 
 import com.google.gson.GsonBuilder;
-import io.github.axolotsh.regexMapper.Plugin;
 import io.github.axolotsh.regexMapper.entities.CustomModelData;
 import io.github.axolotsh.regexMapper.entities.RegexCase;
 import net.kyori.adventure.text.Component;
@@ -11,7 +10,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +62,17 @@ public class RegexCaseUtils {
 
         output += appendLine(getItemComponent());
         output += appendLine(getPatternComponent());
+
+        return MiniMessage.miniMessage().deserialize(output);
+    }
+    public Component getOpComponent() {
+        var output = "";
+        output += getOpNameComponent();
+        output += appendLine(getDescriptionComponent());
+        output += "\n";
+
+        output += appendLine(getItemComponent());
+        output += appendLine(getPatternComponent());
         output += appendLine(getModelComponent());
         output += appendLine(getCustomModelDataComponent());
 
@@ -77,7 +86,11 @@ public class RegexCaseUtils {
 
     private String getNameComponent() {
         var name = regexCase.getName();
-        return String.format("<u><aqua><click:suggest_command:'/regmap give %s'>%s</click></aqua></u>", name, name);
+        return String.format("<aqua>%s</aqua>", name);
+    }
+    private String getOpNameComponent() {
+        var name = regexCase.getName();
+        return String.format("<click:suggest_command:'/regmap give %s'><u>%s</u></click>",name, getNameComponent());
     }
     private String getDescriptionComponent() {
         var description = regexCase.getDescription();
