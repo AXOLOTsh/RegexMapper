@@ -1,8 +1,6 @@
 package io.github.axolotsh.regexMapper.entities;
 
 import org.bukkit.Color;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

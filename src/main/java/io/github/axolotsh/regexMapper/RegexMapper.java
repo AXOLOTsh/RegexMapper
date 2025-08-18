@@ -1,14 +1,13 @@
 package io.github.axolotsh.regexMapper;
 
-import com.google.gson.Gson;
 import io.github.axolotsh.regexMapper.entities.RegexCase;
+import io.github.axolotsh.regexMapper.utils.RegexCaseUtils;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
@@ -69,31 +68,16 @@ public class RegexMapper {
 
         var key = NamespacedKey.fromString("regexmapper:mapped");
         assert key != null;
+        cases.sort(Comparator.comparingInt(RegexCase::getWeight));
         for (RegexCase regexCase : cases) {
-            var currentItemType = item.getType().getKey().toString();
+            var currentItemType = item.getType();
             var itemType = regexCase.getItem();
             var pattern = regexCase.getPattern();
 
             if (itemType == null || Objects.equals(itemType, currentItemType)) {
                 if (itemName.matches(pattern)) {
-                    var model = regexCase.getModel();
-                    if (model != null)
-                        meta.setItemModel(model);
-
-                    var customModelData = regexCase.getCustomModelData();
-                    if (customModelData != null) {
-                        var cmd = meta.getCustomModelDataComponent();
-                        cmd.setFloats(customModelData.getFloats());
-                        cmd.setFlags(customModelData.getFlags());
-                        cmd.setStrings(customModelData.getStrings());
-                        cmd.setColors(customModelData.getColors());
-
-                        meta.setCustomModelDataComponent(cmd);
-                    }
-
-                    var container = meta.getPersistentDataContainer();
-                    container.set(key, PersistentDataType.STRING, regexCase.getName());
-                    item.setItemMeta(meta);
+                    var util = new RegexCaseUtils(regexCase);
+                    item.setItemMeta(util.modifyMeta(meta));
                     return;
                 }
             }
@@ -106,16 +90,11 @@ public class RegexMapper {
         var filter = cases.stream().filter(x -> Objects.equals(x.getName(), containerValue)).findFirst();
         if (filter.isEmpty())
             return;
-        var value = filter.get();
 
-        var model = value.getModel();
-        if (model != null)
-            meta.setItemModel(null);
+        var regexCase = filter.get();
+        var util = new RegexCaseUtils(regexCase);
 
-        var customModelData = value.getCustomModelData();
-        if (customModelData != null)
-            meta.setCustomModelDataComponent(null);
-        item.setItemMeta(meta);
+        item.setItemMeta(util.clearMeta(meta));
     }
 }
 

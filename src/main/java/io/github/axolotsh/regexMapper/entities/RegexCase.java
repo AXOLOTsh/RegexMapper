@@ -1,17 +1,8 @@
 package io.github.axolotsh.regexMapper.entities;
 
-import com.google.gson.Gson;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class RegexCase {
     private String name;
@@ -43,6 +34,16 @@ public class RegexCase {
     public RegexCase pattern(String value) { setPattern(value); return this; }
 
     @Nullable
+    private Integer weight;
+    public Integer getWeight() {
+        if (weight == null)
+            return 0;
+        return weight;
+    }
+    public void setWeight(@Nullable Integer value) { weight = value; }
+    public RegexCase weight(@Nullable Integer value) { setWeight(value); return this; }
+
+    @Nullable
     private NamespacedKey model;
     @Nullable
     public NamespacedKey getModel() {
@@ -62,66 +63,5 @@ public class RegexCase {
     public RegexCase(String name, String pattern) {
         this.name = name;
         this.pattern = pattern;
-    }
-
-    public Component getComponent() {
-        var output = Component.text(getName())
-                .color(NamedTextColor.AQUA)
-                .decorate(TextDecoration.BOLD).appendNewline();
-
-        var description = getDescription();
-        if (description != null) {
-            output = output.appendNewline()
-                    .append(Component.text(description)
-                            .color(NamedTextColor.GRAY)
-                    .appendNewline());
-        }
-
-        output = output.appendNewline()
-                .append(Component.text("Pattern: ")
-                        .decorate(TextDecoration.BOLD))
-
-                .append(Component.text(getPattern())
-                        .color(NamedTextColor.GRAY));
-
-        var model = getModel();
-        if (model != null)  {
-            output = output.appendNewline()
-                    .append(Component.text("Model: ")
-                            .decorate(TextDecoration.BOLD))
-                    .append(Component.text(model.asString())
-                            .color(NamedTextColor.GRAY));
-        }
-
-        var customModelData = getCustomModelData();
-        if (customModelData != null) {
-            var gson = new Gson();
-
-            output = output.appendNewline()
-                    .append(Component.text("CustomModelData: ")
-                            .decorate(TextDecoration.BOLD))
-
-                            .append(Component.text("{ ... }")
-                                    .color(NamedTextColor.GRAY)
-                                    .decorate(TextDecoration.UNDERLINED)
-                                    .hoverEvent(HoverEvent.showText(
-                                            Component.text(gson.toJson(customModelData)))));
-        }
-
-        return output;
-    }
-
-    public static List<RegexCase> getExampleCases() {
-        List<RegexCase> cases = new ArrayList<>();
-
-        cases.add(new RegexCase("Model Example", "(?i)example regex.*")
-                .description("This example will change model of iron ingot item when you match pattern to torch. External models will require a resource pack.")
-                .model(NamespacedKey.fromString("minecraft:torch")));
-
-        cases.add(new RegexCase("CustomModelData Example", "(?i)example regex.*")
-                .description("This example will change custom model data of any item when you match pattern. Model changes by resource pack.")
-                .customModelData(new CustomModelData().addString("example key")));
-
-        return cases;
     }
 }

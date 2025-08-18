@@ -11,6 +11,7 @@ public class RegexMapperCommand implements ICommand {
     public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
         return Commands.literal("regmap")
                 .then(new ListCommand().getCommand())
-                .then(new InfoCommand().getCommand());
+                .then(new InfoCommand().getCommand())
+                .then(new GiveCommand().getCommand());
     }
 }
