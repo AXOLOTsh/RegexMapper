@@ -6,9 +6,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.slf4j.Logger;
 
 public class EventListener implements Listener {
-    private final Logger LOGGER = RegexMapper.LOGGER;
+    private final Logger LOGGER = Plugin.LOGGER;
     @EventHandler
     public void onInventoryClickEvent(InventoryClickEvent event) {
-        RegexMapperService.getInstance().proceedItemRenameConditions(event);
+        RegexMapper.getInstance().proceedItemRenameConditions(event);
     }
 }
